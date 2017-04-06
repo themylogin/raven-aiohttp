@@ -29,13 +29,16 @@ except ImportError:
 class AioHttpTransport(AsyncTransport, HTTPTransport):
     def __init__(self, parsed_url=None, *, verify_ssl=True, resolve=True,
                  timeout=defaults.TIMEOUT,
-                 keepalive=True, family=socket.AF_INET, loop=None):
+                 keepalive=True, family=socket.AF_INET, loop=None,
+                 proxy=None, proxy_auth=None):
         self._resolve = resolve
         self._keepalive = keepalive
         self._family = family
         if loop is None:
             loop = asyncio.get_event_loop()
         self._loop = loop
+        self._proxy = proxy
+        self._proxy_auth = proxy_auth
 
         if has_newstyle_transports:
             if parsed_url is not None:
@@ -78,7 +81,9 @@ class AioHttpTransport(AsyncTransport, HTTPTransport):
                     session.post(url,
                                  data=data,
                                  compress=False,
-                                 headers=headers),
+                                 headers=headers,
+                                 proxy=self._proxy,
+                                 proxy_auth=self._proxy_auth),
                     self.timeout,
                     loop=self._loop)
                 yield from resp.release()
